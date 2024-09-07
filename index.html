@@ -5,8 +5,21 @@
   </head>
   <body>
     <h1>To learn HTML we need to remember below tags</h1>
-    <ol>html</ol>
-    <ol>body</ol>
-    <img src="Bike.jpg" />
+    <ol>
+      <li>html</li>
+      <li>body</li>
+    </ol>
+    <img src="Bike.jpg" alt="A bike" />
+    
+    <h2>Audio Player</h2>
+    <audio id="myAudio" src="spotifydown.com - Supernatural.mp3"></audio>
+    <button onclick="playAudio()">Play Audio</button>
+
+    <script>
+      function playAudio() {
+        var audio = document.getElementById("myAudio");
+        audio.play();
+      }
+    </script>
   </body>
 </html>
