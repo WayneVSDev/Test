@@ -2,6 +2,19 @@
 <html lang="en">
   <head>
     <title>Self Learning HTML</title>
+    <style>
+      .audio-controls {
+        margin-top: 10px;
+      }
+      .volume-control {
+        display: flex;
+        align-items: center;
+        margin-top: 10px;
+      }
+      .volume-control label {
+        margin-right: 10px;
+      }
+    </style>
   </head>
   <body>
     <h1>To learn HTML we need to remember below tags</h1>
@@ -9,30 +22,40 @@
       <li>html</li>
       <li>body</li>
     </ol>
+    <img src="Bike.jpg" alt="A bike" />
     
     <h2>Audio Player</h2>
-    <audio id="myAudio" src="spotifydown.com - Supernatural.mp3"></audio>
-    <button onclick="playAudio()">Play Audio</button>
-    <button onclick="pauseAudio()">Pause Audio</button>
-    <button onclick="stopAudio()">Stop Audio</button>
+    <audio id="myAudio" src="your-audio-file.mp3"></audio>
+    <div class="audio-controls">
+      <button onclick="playAudio()">Play Audio</button>
+      <button onclick="pauseAudio()">Pause Audio</button>
+      <button onclick="stopAudio()">Stop Audio</button>
+    </div>
+    <div class="volume-control">
+      <label for="volumeControl">Volume:</label>
+      <input type="range" id="volumeControl" min="0" max="1" step="0.1" value="1" onchange="adjustVolume()">
+    </div>
 
-    <img src="keyboard.jpeg" alt="A bike" />
-    
     <script>
+      var audio = document.getElementById("myAudio");
+      var volumeControl = document.getElementById("volumeControl");
+
       function playAudio() {
-        var audio = document.getElementById("myAudio");
         audio.play();
       }
-      
+
       function pauseAudio() {
-        document.getElementById("myAudio").pause();
+        audio.pause();
       }
 
       function stopAudio() {
-        var audio = document.getElementById("myAudio");
         audio.pause();
         audio.currentTime = 0;
-      }      
+      }
+
+      function adjustVolume() {
+        audio.volume = volumeControl.value;
+      }
     </script>
   </body>
 </html>
