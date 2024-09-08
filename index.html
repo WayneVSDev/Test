@@ -15,7 +15,6 @@
     <button onclick="playAudio()">Play Audio</button>
     <button onclick="pauseAudio()">Pause Audio</button>
     <button onclick="stopAudio()">Stop Audio</button>
-    <br><br>
 
     <img src="keyboard.jpeg" alt="A bike" />
     
@@ -24,14 +23,16 @@
         var audio = document.getElementById("myAudio");
         audio.play();
       }
+      
       function pauseAudio() {
-        audio.pause();
+        document.getElementById("myAudio").pause();
       }
 
       function stopAudio() {
+        var audio = document.getElementById("myAudio");
         audio.pause();
         audio.currentTime = 0;
-      }
+      }      
     </script>
   </body>
 </html>
