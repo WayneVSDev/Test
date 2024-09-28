@@ -188,6 +188,29 @@
         audio.currentTime = clickPosition;
         updateProgress();
       });
+
+
+      function showYouTubeVideo() {
+        const youtubeContainer = document.getElementById('youtubeContainer');
+        const youtubeVideo = document.getElementById('youtubeVideo');
+        const mp4Container = document.getElementById('mp4Container');
+
+        // Replace 'VIDEO_ID' with the actual YouTube video ID you want to play
+        youtubeVideo.src = 'https://www.youtube.com/embed/VIDEO_ID?autoplay=1';
+        youtubeContainer.style.display = 'block';
+        mp4Container.style.display = 'none';
+      }
+
+      function showMP4Video() {
+        const youtubeContainer = document.getElementById('youtubeContainer');
+        const mp4Container = document.getElementById('mp4Container');
+        const mp4Video = document.getElementById('mp4Video');
+
+        mp4Container.style.display = 'block';
+        youtubeContainer.style.display = 'none';
+        mp4Video.play();
+      }      
+      
     </script>
   </body>
 </html>
