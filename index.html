@@ -129,6 +129,7 @@
       const youtubeCtx = youtubeCanvas.getContext("2d");
       const mp4Canvas = document.getElementById("mp4Visualizer");
       const mp4Ctx = mp4Canvas.getContext("2d");
+      const mp4Video = document.getElementById("mp4Video");
 
       let audioContext;
       let analyser;
@@ -137,9 +138,6 @@
       function initAudioContext() {
         audioContext = new (window.AudioContext || window.webkitAudioContext)();
         analyser = audioContext.createAnalyser();
-        const source = audioContext.createMediaElementSource(audio);
-        source.connect(analyser);
-        analyser.connect(audioContext.destination);
         analyser.fftSize = 256;
         const bufferLength = analyser.frequencyBinCount;
         dataArray = new Uint8Array(bufferLength);
@@ -166,8 +164,9 @@
         }
       }
 
+      let youtubeAnimationId;
       function visualizeYouTube() {
-        requestAnimationFrame(visualizeYouTube);
+        youtubeAnimationId = requestAnimationFrame(visualizeYouTube);
 
         youtubeCtx.clearRect(0, 0, youtubeCanvas.width, youtubeCanvas.height);
 
@@ -229,11 +228,14 @@
       function playAudio() {
         if (!audioContext) {
           initAudioContext();
-          visualizeAudio();
+          const source = audioContext.createMediaElementSource(audio);
+          source.connect(analyser);
+          analyser.connect(audioContext.destination);
         }
         audio.play().then(() => {
           debugElement.textContent = "Audio playing successfully";
           updateProgress();
+          visualizeAudio();
         }).catch(e => {
           console.error("Error playing audio:", e);
           debugElement.textContent = "Error playing audio: " + e.message;
@@ -316,16 +318,29 @@
         youtubeContainer.style.display = 'block';
         mp4Container.style.display = 'none';
 
+        // Stop MP4 visualization if it's running
+        if (mp4Video.played) {
+          mp4Video.pause();
+        }
+
+        // Start YouTube visualization
+        if (youtubeAnimationId) {
+          cancelAnimationFrame(youtubeAnimationId);
+        }
         visualizeYouTube();
       }
  
       function showMP4Video() {
         const youtubeContainer = document.getElementById('youtubeContainer');
         const mp4Container = document.getElementById('mp4Container');
-        const mp4Video = document.getElementById('mp4Video');
 
         mp4Container.style.display = 'block';
         youtubeContainer.style.display = 'none';
+
+        // Stop YouTube visualization
+        if (youtubeAnimationId) {
+          cancelAnimationFrame(youtubeAnimationId);
+        }
 
         if (!audioContext) {
           initAudioContext();
@@ -339,7 +354,7 @@
           visualizeMP4();
         }).catch(e => {
           console.error("Error playing MP4 video:", e);
-          // Handle the error (e.g., show an error message to the user)
+          debugElement.textContent = "Error playing MP4 video: " + e.message;
         });
       }      
     </script>
