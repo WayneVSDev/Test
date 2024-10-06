@@ -3,11 +3,100 @@
   <head>
     <title>Self Learning HTML with Audio and Video Visualizers</title>
     <style>
-      /* ... (previous styles remain the same) ... */
+      .audio-controls, .video-controls {
+        margin-top: 10px;
+      }
+      .volume-control, .seek-control {
+        display: flex;
+        align-items: center;
+        margin-top: 10px;
+      }
+      .volume-control label, .seek-control label {
+        margin-right: 10px;
+      }
+      #debug {
+        margin-top: 20px;
+        color: red;
+      }
+      .progress-container {
+        width: 300px;
+        height: 20px;
+        background-color: #f0f0f0;
+        margin-top: 10px;
+        position: relative;
+        cursor: pointer;
+      }
+      #progressBar {
+        width: 0;
+        height: 100%;
+        background-color: #4CAF50;
+        position: absolute;
+        transition: width 0.1s;
+      }
+      #progressTime {
+        position: absolute;
+        top: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 12px;
+        line-height: 20px;
+      }
+      #seekSlider {
+        width: 300px;
+      }
+      .video-container {
+        margin-top: 20px;
+        display: none;
+      }
+      #youtubeVideo, #mp4Video {
+        max-width: 100%;
+      }
+      #audioVisualizer, #youtubeVisualizer, #mp4Visualizer {
+        width: 300px;
+        height: 150px;
+        background-color: #000;
+        margin-top: 20px;
+      }
+      #youtubeVisualizer {
+        border-radius: 50%;
+      }
     </style>
   </head>
   <body>
-    <!-- ... (previous HTML content remains the same) ... -->
+    <h1>To learn HTML we need to remember below tags</h1>
+    <ol>
+      <li>html</li>
+      <li>body</li>
+    </ol>
+    <p>
+      <a href="https://www.google.com">Visit Google Website</a>
+    </p>
+    
+    <h2>Audio Player with Visualizer</h2>
+    <audio id="myAudio">
+      <source src="Supernatural.mp3" type="audio/mpeg">
+      Your browser does not support the audio element.
+    </audio>
+    <div class="audio-controls">
+      <button onclick="playAudio()">Play Audio</button>
+      <button onclick="pauseAudio()">Pause Audio</button>
+      <button onclick="stopAudio()">Stop Audio</button>
+    </div>
+    <div class="volume-control">
+      <label for="volumeControl">Volume:</label>
+      <input type="range" id="volumeControl" min="0" max="1" step="0.1" value="1" oninput="adjustVolume()">
+    </div>
+    <div class="progress-container" id="progressContainer">
+      <div id="progressBar"></div>
+      <div id="progressTime">0:00 / 0:00</div>
+    </div>
+    <div class="seek-control">
+      <label for="seekSlider">Seek:</label>
+      <input type="range" id="seekSlider" min="0" max="100" value="0" step="0.1">
+    </div>
+    <canvas id="audioVisualizer"></canvas>
+    <img src="/api/placeholder/300/200" alt="A bike" width="300" height="auto">
+    <div id="debug"></div>
     
     <h2>Video Players</h2>
     <button onclick="loadYouTubeVideo()">Load YouTube Video</button>
@@ -18,11 +107,229 @@
       <canvas id="youtubeVisualizer"></canvas>
     </div>
     
-    <!-- ... (rest of the HTML remains the same) ... -->
+    <div id="mp4Container" class="video-container">
+      <video id="mp4Video" width="560" height="315" controls>
+        <source src="FatSong.mp4" type="video/mp4">
+        Your browser does not support the video tag.
+      </video>
+      <canvas id="mp4Visualizer"></canvas>
+    </div>
     
     <script src="https://www.youtube.com/iframe_api"></script>
     <script>
-      // ... (previous JavaScript code remains the same) ...
+      const audio = document.getElementById("myAudio");
+      const volumeControl = document.getElementById("volumeControl");
+      const debugElement = document.getElementById("debug");
+      const progressBar = document.getElementById("progressBar");
+      const progressTime = document.getElementById("progressTime");
+      const seekSlider = document.getElementById("seekSlider");
+      const progressContainer = document.getElementById("progressContainer");
+      const audioCanvas = document.getElementById("audioVisualizer");
+      const audioCtx = audioCanvas.getContext("2d");
+      const youtubeCanvas = document.getElementById("youtubeVisualizer");
+      const youtubeCtx = youtubeCanvas.getContext("2d");
+      const mp4Canvas = document.getElementById("mp4Visualizer");
+      const mp4Ctx = mp4Canvas.getContext("2d");
+      const mp4Video = document.getElementById("mp4Video");
+
+      let audioContext;
+      let analyser;
+      let dataArray;
+
+      function initAudioContext() {
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        analyser = audioContext.createAnalyser();
+        analyser.fftSize = 256;
+        const bufferLength = analyser.frequencyBinCount;
+        dataArray = new Uint8Array(bufferLength);
+      }
+
+      function visualizeAudio() {
+        requestAnimationFrame(visualizeAudio);
+
+        analyser.getByteFrequencyData(dataArray);
+
+        audioCtx.fillStyle = 'rgb(0, 0, 0)';
+        audioCtx.fillRect(0, 0, audioCanvas.width, audioCanvas.height);
+
+        const barWidth = (audioCanvas.width / dataArray.length) * 2.5;
+        let x = 0;
+
+        for (let i = 0; i < dataArray.length; i++) {
+          const barHeight = dataArray[i] / 2;
+
+          audioCtx.fillStyle = `rgb(${barHeight + 100}, 50, 50)`;
+          audioCtx.fillRect(x, audioCanvas.height - barHeight, barWidth, barHeight);
+
+          x += barWidth + 1;
+        }
+      }
+
+      function visualizeMP4() {
+        requestAnimationFrame(visualizeMP4);
+
+        analyser.getByteTimeDomainData(dataArray);
+
+        mp4Ctx.fillStyle = 'rgb(200, 200, 200)';
+        mp4Ctx.fillRect(0, 0, mp4Canvas.width, mp4Canvas.height);
+
+        mp4Ctx.lineWidth = 2;
+        mp4Ctx.strokeStyle = 'rgb(0, 0, 0)';
+
+        mp4Ctx.beginPath();
+
+        const sliceWidth = mp4Canvas.width * 1.0 / dataArray.length;
+        let x = 0;
+
+        for (let i = 0; i < dataArray.length; i++) {
+          const v = dataArray[i] / 128.0;
+          const y = v * mp4Canvas.height / 2;
+
+          if (i === 0) {
+            mp4Ctx.moveTo(x, y);
+          } else {
+            mp4Ctx.lineTo(x, y);
+          }
+
+          x += sliceWidth;
+        }
+
+        mp4Ctx.lineTo(mp4Canvas.width, mp4Canvas.height / 2);
+        mp4Ctx.stroke();
+      }
+
+      function playAudio() {
+        if (!audioContext) {
+          initAudioContext();
+          const source = audioContext.createMediaElementSource(audio);
+          source.connect(analyser);
+          analyser.connect(audioContext.destination);
+        }
+        audio.play().then(() => {
+          debugElement.textContent = "Audio playing successfully";
+          updateProgress();
+          visualizeAudio();
+        }).catch(e => {
+          console.error("Error playing audio:", e);
+          debugElement.textContent = "Error playing audio: " + e.message;
+        });
+      }
+
+      function pauseAudio() {
+        audio.pause();
+        debugElement.textContent = "Audio paused";
+      }
+
+      function stopAudio() {
+        audio.pause();
+        audio.currentTime = 0;
+        updateProgress();
+        debugElement.textContent = "Audio stopped";
+      }
+
+      function adjustVolume() {
+        audio.volume = volumeControl.value;
+        debugElement.textContent = "Volume adjusted to " + (volumeControl.value * 100) + "%";
+      }
+
+      function formatTime(seconds) {
+        const minutes = Math.floor(seconds / 60);
+        const remainingSeconds = Math.floor(seconds % 60);
+        return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+      }
+
+      function updateProgress() {
+        const progress = (audio.currentTime / audio.duration) * 100;
+        progressBar.style.width = `${progress}%`;
+        progressTime.textContent = `${formatTime(audio.currentTime)} / ${formatTime(audio.duration)}`;
+        seekSlider.value = progress;
+
+        if (!audio.paused) {
+          requestAnimationFrame(updateProgress);
+        }
+      }
+
+      function seek() {
+        const seekTime = (seekSlider.value / 100) * audio.duration;
+        audio.currentTime = seekTime;
+        updateProgress();
+      }
+
+      // Initialize volume
+      adjustVolume();
+
+      // Check if audio file is loaded
+      audio.addEventListener('loadeddata', () => {
+        debugElement.textContent = "Audio file loaded successfully";
+        updateProgress();
+      });
+
+      audio.addEventListener('error', (e) => {
+        console.error("Error loading audio file:", e);
+        debugElement.textContent = "Error loading audio file: " + e.message;
+      });
+
+      // Update progress when seeking
+      audio.addEventListener('seeked', updateProgress);
+
+      // Seek functionality
+      seekSlider.addEventListener('input', seek);
+
+      // Click on progress bar to seek
+      progressContainer.addEventListener('click', function(e) {
+        const clickPosition = (e.offsetX / this.offsetWidth) * audio.duration;
+        audio.currentTime = clickPosition;
+        updateProgress();
+      });
+
+      function showYouTubeVideo() {
+        const youtubeContainer = document.getElementById('youtubeContainer');
+        const youtubeVideo = document.getElementById('youtubeVideo');
+        const mp4Container = document.getElementById('mp4Container');
+
+        youtubeVideo.src = 'https://www.youtube.com/embed/TqGeM9T6gwI?autoplay=1';
+        youtubeContainer.style.display = 'block';
+        mp4Container.style.display = 'none';
+
+        // Stop MP4 visualization if it's running
+        if (mp4Video.played) {
+          mp4Video.pause();
+        }
+
+        // Start YouTube visualization
+        if (youtubeAnimationId) {
+          cancelAnimationFrame(youtubeAnimationId);
+        }
+        visualizeYouTube();
+      }
+ 
+      function showMP4Video() {
+        const youtubeContainer = document.getElementById('youtubeContainer');
+        const mp4Container = document.getElementById('mp4Container');
+
+        mp4Container.style.display = 'block';
+        youtubeContainer.style.display = 'none';
+
+        // Stop YouTube visualization
+        if (youtubeAnimationId) {
+          cancelAnimationFrame(youtubeAnimationId);
+        }
+
+        if (!audioContext) {
+          initAudioContext();
+        }
+
+        const source = audioContext.createMediaElementSource(mp4Video);
+        source.connect(analyser);
+        analyser.connect(audioContext.destination);
+
+        mp4Video.play().then(() => {
+          visualizeMP4();
+        }).catch(e => {
+          console.error("Error playing MP4 video:", e);
+          debugElement.textContent = "Error playing MP4 video: " + e.message;
+        });
+      }      
 
       let youtubePlayer;
       let youtubeAnimationId;
@@ -50,6 +357,7 @@
         }
       }
 
+      let youtubeAnimationId;
       function visualizeYouTube() {
         if (!isYoutubePlaying) {
           cancelAnimationFrame(youtubeAnimationId);
