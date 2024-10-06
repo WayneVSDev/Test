@@ -60,6 +60,9 @@
       #youtubeVisualizer {
         border-radius: 50%;
       }
+      #image-Container {
+        margin-top: 20px;
+      }
     </style>
   </head>
   <body>
@@ -97,7 +100,9 @@
     <canvas id="audioVisualizer"></canvas>
     <div id="debug"></div>
 
-    <p><img src="Bike.jpg" alt="A bike" width="300" height="auto"></p>
+    <div id="imgContainer" class="image-container">
+      <img src="Bike.jpg" alt="A bike" width="300" height="auto">
+    </div>
     
     <h2>Video Players</h2>
     <button onclick="showYouTubeVideo()">Play YouTube Video</button>
