@@ -99,11 +99,11 @@
     <div id="debug"></div>
     
     <h2>Video Players</h2>
-    <button onclick="loadYouTubeVideo()">Load YouTube Video</button>
+    <button onclick="showYouTubeVideo()">Play YouTube Video</button>
     <button onclick="showMP4Video()">Play MP4 Video</button>
     
     <div id="youtubeContainer" class="video-container">
-      <div id="youtubeVideo"></div>
+      <iframe id="youtubeVideo" width="560" height="315" src="" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
       <canvas id="youtubeVisualizer"></canvas>
     </div>
     
@@ -115,7 +115,6 @@
       <canvas id="mp4Visualizer"></canvas>
     </div>
     
-    <script src="https://www.youtube.com/iframe_api"></script>
     <script>
       const audio = document.getElementById("myAudio");
       const volumeControl = document.getElementById("volumeControl");
@@ -130,7 +129,6 @@
       const youtubeCtx = youtubeCanvas.getContext("2d");
       const mp4Canvas = document.getElementById("mp4Visualizer");
       const mp4Ctx = mp4Canvas.getContext("2d");
-      const mp4Video = document.getElementById("mp4Video");
 
       let audioContext;
       let analyser;
@@ -139,6 +137,9 @@
       function initAudioContext() {
         audioContext = new (window.AudioContext || window.webkitAudioContext)();
         analyser = audioContext.createAnalyser();
+        const source = audioContext.createMediaElementSource(audio);
+        source.connect(analyser);
+        analyser.connect(audioContext.destination);
         analyser.fftSize = 256;
         const bufferLength = analyser.frequencyBinCount;
         dataArray = new Uint8Array(bufferLength);
@@ -162,6 +163,33 @@
           audioCtx.fillRect(x, audioCanvas.height - barHeight, barWidth, barHeight);
 
           x += barWidth + 1;
+        }
+      }
+
+      function visualizeYouTube() {
+        requestAnimationFrame(visualizeYouTube);
+
+        youtubeCtx.clearRect(0, 0, youtubeCanvas.width, youtubeCanvas.height);
+
+        const centerX = youtubeCanvas.width / 2;
+        const centerY = youtubeCanvas.height / 2;
+        const radius = Math.min(centerX, centerY) - 10;
+
+        for (let i = 0; i < 360; i += 5) {
+          const angle = i * Math.PI / 180;
+          const length = Math.random() * radius / 2 + radius / 2;
+
+          const startX = centerX + Math.cos(angle) * radius;
+          const startY = centerY + Math.sin(angle) * radius;
+          const endX = centerX + Math.cos(angle) * (radius - length);
+          const endY = centerY + Math.sin(angle) * (radius - length);
+
+          youtubeCtx.beginPath();
+          youtubeCtx.moveTo(startX, startY);
+          youtubeCtx.lineTo(endX, endY);
+          youtubeCtx.strokeStyle = `hsl(${i}, 100%, 50%)`;
+          youtubeCtx.lineWidth = 2;
+          youtubeCtx.stroke();
         }
       }
 
@@ -201,14 +229,11 @@
       function playAudio() {
         if (!audioContext) {
           initAudioContext();
-          const source = audioContext.createMediaElementSource(audio);
-          source.connect(analyser);
-          analyser.connect(audioContext.destination);
+          visualizeAudio();
         }
         audio.play().then(() => {
           debugElement.textContent = "Audio playing successfully";
           updateProgress();
-          visualizeAudio();
         }).catch(e => {
           console.error("Error playing audio:", e);
           debugElement.textContent = "Error playing audio: " + e.message;
@@ -291,29 +316,16 @@
         youtubeContainer.style.display = 'block';
         mp4Container.style.display = 'none';
 
-        // Stop MP4 visualization if it's running
-        if (mp4Video.played) {
-          mp4Video.pause();
-        }
-
-        // Start YouTube visualization
-        if (youtubeAnimationId) {
-          cancelAnimationFrame(youtubeAnimationId);
-        }
         visualizeYouTube();
       }
  
       function showMP4Video() {
         const youtubeContainer = document.getElementById('youtubeContainer');
         const mp4Container = document.getElementById('mp4Container');
+        const mp4Video = document.getElementById('mp4Video');
 
         mp4Container.style.display = 'block';
         youtubeContainer.style.display = 'none';
-
-        // Stop YouTube visualization
-        if (youtubeAnimationId) {
-          cancelAnimationFrame(youtubeAnimationId);
-        }
 
         if (!audioContext) {
           initAudioContext();
@@ -327,88 +339,9 @@
           visualizeMP4();
         }).catch(e => {
           console.error("Error playing MP4 video:", e);
-          debugElement.textContent = "Error playing MP4 video: " + e.message;
+          // Handle the error (e.g., show an error message to the user)
         });
       }      
-
-      let youtubePlayer;
-      let youtubeAnimationId;
-      let isYoutubePlaying = false;
-
-      function onYouTubeIframeAPIReady() {
-        youtubePlayer = new YT.Player('youtubeVideo', {
-          height: '315',
-          width: '560',
-          videoId: 'TqGeM9T6gwI',
-          events: {
-            'onStateChange': onPlayerStateChange
-          }
-        });
-      }
-
-      function onPlayerStateChange(event) {
-        if (event.data == YT.PlayerState.PLAYING) {
-          isYoutubePlaying = true;
-          if (!youtubeAnimationId) {
-            visualizeYouTube();
-          }
-        } else {
-          isYoutubePlaying = false;
-        }
-      }
-
-      let youtubeAnimationId;
-      function visualizeYouTube() {
-        if (!isYoutubePlaying) {
-          cancelAnimationFrame(youtubeAnimationId);
-          youtubeAnimationId = null;
-          return;
-        }
-
-        youtubeAnimationId = requestAnimationFrame(visualizeYouTube);
-
-        youtubeCtx.clearRect(0, 0, youtubeCanvas.width, youtubeCanvas.height);
-
-        const centerX = youtubeCanvas.width / 2;
-        const centerY = youtubeCanvas.height / 2;
-        const radius = Math.min(centerX, centerY) - 10;
-
-        for (let i = 0; i < 360; i += 5) {
-          const angle = i * Math.PI / 180;
-          const length = Math.random() * radius / 2 + radius / 2;
-
-          const startX = centerX + Math.cos(angle) * radius;
-          const startY = centerY + Math.sin(angle) * radius;
-          const endX = centerX + Math.cos(angle) * (radius - length);
-          const endY = centerY + Math.sin(angle) * (radius - length);
-
-          youtubeCtx.beginPath();
-          youtubeCtx.moveTo(startX, startY);
-          youtubeCtx.lineTo(endX, endY);
-          youtubeCtx.strokeStyle = `hsl(${i}, 100%, 50%)`;
-          youtubeCtx.lineWidth = 2;
-          youtubeCtx.stroke();
-        }
-      }
-
-      function loadYouTubeVideo() {
-        const youtubeContainer = document.getElementById('youtubeContainer');
-        const mp4Container = document.getElementById('mp4Container');
-
-        youtubeContainer.style.display = 'block';
-        mp4Container.style.display = 'none';
-
-        // Stop MP4 visualization if it's running
-        if (mp4Video.played) {
-          mp4Video.pause();
-        }
-
-        if (youtubePlayer) {
-          youtubePlayer.playVideo();
-        }
-      }
-
-      // ... (rest of the JavaScript code remains the same) ...
     </script>
   </body>
 </html>
